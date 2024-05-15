@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from sqlmodel import Session, select
 from functools import lru_cache
 
@@ -48,7 +48,10 @@ async def get_all(session: Session = Depends(get_db)):
     return get_all_mmt_cached()
 
 
-@app.get("/makes")
+# Makes ------
+
+
+@app.get("/makes", tags=["Makes"])
 async def get_makes(session: Session = Depends(get_db)) -> list[Make]:
     results = session.exec(select(Make))
     makes: list[Make] = []
@@ -57,7 +60,7 @@ async def get_makes(session: Session = Depends(get_db)) -> list[Make]:
     return makes
 
 
-@app.post("/makes")
+@app.post("/makes", tags=["Makes"])
 async def add_make(new_make_name: str, session: Session = Depends(get_db)) -> str:
     new_make = Make(name=new_make_name)
     session.add(new_make)
@@ -66,7 +69,10 @@ async def add_make(new_make_name: str, session: Session = Depends(get_db)) -> st
     return "Make added successfully."
 
 
-@app.get("/models")
+# Models ------
+
+
+@app.get("/models", tags=["Models"])
 async def get_models(make_name: str, session: Session = Depends(get_db)) -> list[Model]:
     make = session.exec(select(Make).where(Make.name == make_name)).first()
     # results = session.exec(select(Model).where(Model.make == make))
@@ -76,7 +82,7 @@ async def get_models(make_name: str, session: Session = Depends(get_db)) -> list
     return make.models
 
 
-@app.post("/models")
+@app.post("/models", tags=["Models"])
 async def add_model(
     make_name: str, new_model_name: str, session: Session = Depends(get_db)
 ) -> str:
@@ -90,7 +96,7 @@ async def add_model(
     return "Model added successfully."
 
 
-@app.delete("/models/{make_name}/{model_name}")
+@app.delete("/models/{make_name}/{model_name}", tags=["Models"])
 async def delete_model(
     make_name: str, model_name: str, session: Session = Depends(get_db)
 ) -> str:
@@ -107,7 +113,10 @@ async def delete_model(
     return "Model deleted successfully"
 
 
-@app.get("/generations")
+# Generations ------
+
+
+@app.get("/generations", tags=["Generations"])
 async def get_generations(
     model_name: str, session: Session = Depends(get_db)
 ) -> list[Generation]:
@@ -119,7 +128,7 @@ async def get_generations(
     return model.generations
 
 
-@app.post("/generations")
+@app.post("/generations", tags=["Generations"])
 async def add_generation(
     model_name: str, generation_name: str, session: Session = Depends(get_db)
 ) -> str:
@@ -134,7 +143,10 @@ async def add_generation(
     return "Generation added successfully."
 
 
-@app.get("/chassiscodes")
+# ChassisCodes ------
+
+
+@app.get("/chassiscodes", tags=["Chassis Codes"])
 async def get_chassis_codes(
     generation_name: str, session: Session = Depends(get_db)
 ) -> list[ChassisCode]:
@@ -148,7 +160,7 @@ async def get_chassis_codes(
     return generation.chassis_codes
 
 
-@app.post("/chassiscodes")
+@app.post("/chassiscodes", tags=["Chassis Codes"])
 async def add_chassis_code(
     model_name: str,
     generation_name: str,
@@ -174,7 +186,10 @@ async def add_chassis_code(
     return "Chassis Code added successfully."
 
 
-@app.get("/trims")
+# Trims ------
+
+
+@app.get("/trims", tags=["Trims"])
 async def get_trims(model_name: str, session: Session = Depends(get_db)) -> list[Trim]:
     model = session.exec(select(Model).where(Model.name == model_name)).first()
     # results = session.exec(select(Trim).where(Trim.generation == generation))
@@ -184,7 +199,7 @@ async def get_trims(model_name: str, session: Session = Depends(get_db)) -> list
     return model.trims
 
 
-@app.post("/trims")
+@app.post("/trims", tags=["Trims"])
 async def add_trim(trim: NewTrimRequest, session: Session = Depends(get_db)) -> str:
     trims_model = session.exec(select(Model).where(Model.name == trim.model)).first()
 
@@ -195,7 +210,10 @@ async def add_trim(trim: NewTrimRequest, session: Session = Depends(get_db)) -> 
     return "Trim added successfully."
 
 
-@app.get("/engines")
+# Engines ------
+
+
+@app.get("/engines", tags=["Engines"])
 async def get_engines(session: Session = Depends(get_db)) -> list[Engine]:
     results = session.exec(select(Engine))
     engines: list[Engine] = []
@@ -204,7 +222,7 @@ async def get_engines(session: Session = Depends(get_db)) -> list[Engine]:
     return engines
 
 
-@app.post("/engines")
+@app.post("/engines", tags=["Engines"])
 async def add_engine(
     new_engine: NewEngineRequest, session: Session = Depends(get_db)
 ) -> str:
@@ -215,7 +233,10 @@ async def add_engine(
     return "Engine added successfully."
 
 
-@app.get("/transmissions")
+# Transmissions ------
+
+
+@app.get("/transmissions", tags=["Transmissions"])
 async def get_transmissions(session: Session = Depends(get_db)) -> list[Transmission]:
     results = session.exec(select(Transmission))
     transmissions: list[Transmission] = []
@@ -224,7 +245,7 @@ async def get_transmissions(session: Session = Depends(get_db)) -> list[Transmis
     return transmissions
 
 
-@app.post("/transmissions")
+@app.post("/transmissions", tags=["Transmissions"])
 async def add_transmission(
     new_transmission: NewTransmissionRequest, session: Session = Depends(get_db)
 ) -> str:
@@ -233,6 +254,36 @@ async def add_transmission(
     session.commit()
     session.refresh(transmission)
     return "Transmission added successfully."
+
+
+@app.put("/transmissions/{transmission_name}", tags=["Transmissions"])
+async def update_transmissions(
+    transmission_name: str,
+    updated_transmission: NewTransmissionRequest,
+    session: Session = Depends(get_db),
+):
+    transmission = session.exec(
+        select(Transmission).where(Transmission.name == transmission_name)
+    ).one()
+    transmission.name = updated_transmission.name
+    transmission.type = updated_transmission.type
+    session.add(transmission)
+    session.commit()
+    session.refresh(transmission)
+
+
+@app.delete("/transmissions/{transmission_name}", tags=["Transmissions"])
+async def delete_transmissions(
+    transmission_name: str, session: Session = Depends(get_db)
+):
+    transmission = session.exec(
+        select(Transmission).where(Transmission.name == transmission_name)
+    ).first()
+    session.delete(transmission)
+    session.commit()
+
+
+# Cars ------
 
 
 @app.get("/cars", tags=["Cars"])
@@ -266,10 +317,10 @@ async def add_car(
         width=car_request.width,
     )
 
-    for engine in car_request.engines:
-        e = session.exec(select(Engine).where(Engine.name == engine.name)).first()
+    for eng in car_request.engines:
+        e = session.exec(select(Engine).where(Engine.name == eng.name)).first()
         if e is None:
-            e = Engine.model_validate(engine)
+            e = Engine.model_validate(eng)
         new_car.engines.append(e)
 
     for transmission in car_request.transmissions:

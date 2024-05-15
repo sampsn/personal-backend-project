@@ -103,7 +103,9 @@ class Engine(SQLModel, table=True):
     hp: int
     tq: int
     aspiration: str
-    # NA = Naturally Aspirated | TT = Twin Turbo | T = Turbocharged | SC-B = Supercharged w/ Blower | SC-C = Supercharged w/ Centrifugal
+    # NA = Naturally Aspirated | TT = Twin Turbo | T = Turbocharged
+    # SC-B = Supercharged w/ Blower
+    # SC-C = Supercharged w/ Centrifugal
     displacement: float
     cylinders: int
     configuration: str
